@@ -9,10 +9,10 @@ from flask import Flask
 import threading
 
 # Replace this with your bot's API token
-API_TOKEN = 'your-telegram-bot-token'
+API_TOKEN = '7872145894:AAHXeYeq5WNqco63GdOoB0RDuNy7QJfDWcg'
 
 # Replace this with your remove.bg API key
-REMOVE_BG_API_KEY = 'your-remove.bg-api-key'
+REMOVE_BG_API_KEY = 'jvbpsiXdN3uPkWTxYCDg2WsK'
 
 # Image dimensions for passport size (pixels)
 PASSPORT_WIDTH = 413
