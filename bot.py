@@ -63,18 +63,25 @@ async def handle_image(update, context):
     image_path = f"temp_{update.message.from_user.id}.jpg"
     await photo_file.download(image_path)
 
+    output_path = f"passport_{update.message.from_user.id}.jpg"  # Output path
+
     try:
+        # Remove background
         bg_removed = remove_background(image_path)
         bg_removed_image = Image.open(BytesIO(bg_removed))
+
+        # Crop to passport size
         passport_image = crop_to_passport(bg_removed_image)
-        output_path = f"passport_{update.message.from_user.id}.jpg"
-        passport_image.save(output_path)
-        await context.bot.send_photo(chat_id=update.message.chat_id, photo=open(output_path, 'rb'))
+        passport_image.save(output_path, quality=95)  # Adjust quality if needed
+
+        # Send the processed image
+        await context.bot.send_photo(chat_id=update.message.chat.id, photo=open(output_path, 'rb'))
 
     except Exception as e:
         await update.message.reply_text(f"Error: {str(e)}")
 
     finally:
+        # Cleanup temporary files
         if os.path.exists(image_path):
             os.remove(image_path)
         if os.path.exists(output_path):
