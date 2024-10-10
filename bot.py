@@ -7,6 +7,7 @@ from telegram.ext import Application, CommandHandler, MessageHandler, filters
 from io import BytesIO
 from flask import Flask
 import threading
+import asyncio
 
 # Replace this with your bot's API token
 API_TOKEN = '7872145894:AAHXeYeq5WNqco63GdOoB0RDuNy7QJfDWcg'
@@ -29,6 +30,7 @@ def remove_background(image_path):
     ''' Removes background using remove.bg API '''
     url = 'https://api.remove.bg/v1.0/removebg'
     headers = {'X-Api-Key': REMOVE_BG_API_KEY}
+    
     with open(image_path, 'rb') as image_file:
         response = requests.post(
             url,
@@ -66,11 +68,16 @@ async def handle_image(update, context):
     output_path = f"passport_{update.message.from_user.id}.jpg"  # Output path
 
     try:
-        # Remove background
-        bg_removed = remove_background(image_path)
+        # Notify the user that processing has started
+        await update.message.reply_text("Processing your image...")
+
+        # Step 1: Remove background
+        await context.bot.send_message(chat_id=update.message.chat.id, text="Removing background... 50%")
+        bg_removed = remove_background(image_path)  # Process the image
         bg_removed_image = Image.open(BytesIO(bg_removed))
 
-        # Crop to passport size
+        # Step 2: Crop to passport size
+        await context.bot.send_message(chat_id=update.message.chat.id, text="Cropping image to passport size... 100%")
         passport_image = crop_to_passport(bg_removed_image)
         passport_image.save(output_path, quality=95)  # Adjust quality if needed
 
