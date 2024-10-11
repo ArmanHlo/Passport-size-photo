@@ -9,8 +9,8 @@ from flask import Flask
 import threading
 
 # Use environment variables for sensitive information
-API_TOKEN = os.getenv('TELEGRAM_API_TOKEN', '7872145894:AAHXeYeq5WNqco63GdOoB0RDuNy7QJfDWcg')  # Set your API token in the environment
-REMOVE_BG_API_KEY = os.getenv('REMOVE_BG_API_KEY', 'jvbpsiXdN3uPkWTxYCDg2WsK')  # Set your API key in the environment
+API_TOKEN = os.getenv('TELEGRAM_API_TOKEN', '7872145894:AAHXeYeq5WNqco63GdOoB0RDuNy7QJfDWcg')
+REMOVE_BG_API_KEY = os.getenv('REMOVE_BG_API_KEY', 'jvbpsiXdN3uPkWTxYCDg2WsK')
 
 # Image dimensions for passport size (pixels)
 PASSPORT_WIDTH = 413
@@ -52,7 +52,14 @@ def crop_to_passport(image):
 
     # Get the largest face detected
     x, y, w, h = max(faces, key=lambda f: f[2] * f[3])
-    cropped_image = image.crop((x, y, x + w, y + h))
+
+    # Expand the bounding box to include shoulders
+    shoulder_margin = int(h * 0.5)  # Adjust this value to include more of the shoulders
+    new_y = max(0, y - shoulder_margin)  # Ensure we don't go out of bounds
+    new_height = h + shoulder_margin  # Expand the height to include shoulders
+
+    # Adjust the cropping area to passport size while keeping the face in focus
+    cropped_image = image.crop((x, new_y, x + w, new_y + new_height))
     cropped_image = cropped_image.resize((PASSPORT_WIDTH, PASSPORT_HEIGHT), Image.LANCZOS)
 
     # Enhance image quality
