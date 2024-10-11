@@ -7,7 +7,6 @@ from telegram.ext import Application, CommandHandler, MessageHandler, filters
 from io import BytesIO
 from flask import Flask
 import threading
-import asyncio
 
 # Replace this with your bot's API token
 API_TOKEN = '7872145894:AAHXeYeq5WNqco63GdOoB0RDuNy7QJfDWcg'
@@ -63,7 +62,7 @@ async def handle_image(update, context):
     ''' Handle images sent by users '''
     photo_file = await update.message.photo[-1].get_file()
     image_path = f"temp_{update.message.from_user.id}.jpg"
-    await photo_file.download(image_path)
+    await photo_file.download_to_drive(image_path)  # Using download_to_drive in newer versions
 
     output_path = f"passport_{update.message.from_user.id}.jpg"  # Output path
 
@@ -105,10 +104,10 @@ def run_telegram_bot():
     application.add_handler(MessageHandler(filters.PHOTO, handle_image))
     application.run_polling()
 
-if __name__ == '__main__':    
+if __name__ == '__main__':
     # Start the Flask server in a separate thread
     port = int(os.environ.get('PORT', 5000))  # Port for Flask
     threading.Thread(target=app.run, kwargs={'host': '0.0.0.0', 'port': port}).start()
 
     # Run the Telegram bot
-    asyncio.run(run_telegram_bot())
+    run_telegram_bot()  # Run without asyncio.run() to avoid issues
