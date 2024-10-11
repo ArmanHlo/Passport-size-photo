@@ -30,3 +30,5 @@ urllib3==2.2.3
 Werkzeug==3.0.4
 python-dotenv==1.0.0
 transformers==4.33.0
+diffusers==0.18.0
+torch==2.0.1 
