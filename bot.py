@@ -12,6 +12,7 @@ import threading
 API_TOKEN = os.getenv('TELEGRAM_API_TOKEN', '7872145894:AAHXeYeq5WNqco63GdOoB0RDuNy7QJfDWcg')
 REMOVE_BG_API_KEY = os.getenv('REMOVE_BG_API_KEY', 'jvbpsiXdN3uPkWTxYCDg2WsK')
 
+
 # Image dimensions for passport size (pixels)
 PASSPORT_WIDTH = 413
 PASSPORT_HEIGHT = 531
@@ -102,7 +103,8 @@ async def handle_image(update, context):
         passport_image.save(output_path, format='JPEG', quality=95)
 
         # Send the processed image
-        await context.bot.send_photo(chat_id=update.message.chat.id, photo=open(output_path, 'rb'))
+        with open(output_path, 'rb') as f:
+            await context.bot.send_photo(chat_id=update.message.chat.id, photo=f)
 
     except Exception as e:
         await update.message.reply_text(f"Error: {str(e)}")
@@ -132,3 +134,4 @@ if __name__ == '__main__':
 
     # Run the Telegram bot
     run_telegram_bot()  # Run without asyncio.run() to avoid issues
+
