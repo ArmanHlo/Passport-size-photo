@@ -2,7 +2,7 @@ import os
 import cv2
 import requests
 import numpy as np
-from PIL import Image, ImageFilter  
+from PIL import Image, ImageEnhance
 from telegram.ext import Application, CommandHandler, MessageHandler, filters
 from io import BytesIO
 from flask import Flask
@@ -53,7 +53,14 @@ def crop_to_passport(image):
     # Get the largest face detected
     x, y, w, h = max(faces, key=lambda f: f[2] * f[3])
     cropped_image = image.crop((x, y, x + w, y + h))
-    cropped_image = cropped_image.resize((PASSPORT_WIDTH, PASSPORT_HEIGHT), Image.LANCZOS)  # Use LANCZOS for high-quality resizing
+    cropped_image = cropped_image.resize((PASSPORT_WIDTH, PASSPORT_HEIGHT), Image.LANCZOS)
+
+    # Enhance image quality
+    enhancer = ImageEnhance.Contrast(cropped_image)
+    cropped_image = enhancer.enhance(1.2)  # Increase contrast
+
+    enhancer = ImageEnhance.Brightness(cropped_image)
+    cropped_image = enhancer.enhance(1.1)  # Slightly increase brightness
 
     return cropped_image
 
@@ -61,7 +68,7 @@ async def handle_image(update, context):
     ''' Handle images sent by users '''
     photo_file = await update.message.photo[-1].get_file()
     image_path = f"temp_{update.message.from_user.id}.jpg"
-    await photo_file.download_to_drive(image_path)  # Using download_to_drive in newer versions
+    await photo_file.download_to_drive(image_path)
 
     output_path = f"passport_{update.message.from_user.id}.jpg"  # Output path
 
@@ -71,7 +78,7 @@ async def handle_image(update, context):
 
         # Step 1: Remove background
         await context.bot.send_message(chat_id=update.message.chat.id, text="Removing background... 50%")
-        bg_removed = remove_background(image_path)  # Process the image
+        bg_removed = remove_background(image_path)
         bg_removed_image = Image.open(BytesIO(bg_removed))
 
         # Step 2: Crop to passport size
@@ -82,7 +89,7 @@ async def handle_image(update, context):
         passport_image = passport_image.convert("RGB")
         
         # Save the processed image as JPEG
-        passport_image.save(output_path, format='JPEG', quality=95)  # Adjust quality if needed
+        passport_image.save(output_path, format='JPEG', quality=95)
 
         # Send the processed image
         await context.bot.send_photo(chat_id=update.message.chat.id, photo=open(output_path, 'rb'))
