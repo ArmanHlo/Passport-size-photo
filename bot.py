@@ -57,7 +57,7 @@ async def handle_message(update: Update, context):
 # Function to run the Telegram bot
 def run_telegram_bot():
     # Replace 'YOUR_BOT_TOKEN' with your bot's token
-    application = ApplicationBuilder().token('7872145894:AAHXeYeq5WNqco63GdOoB0RDuNy7QJfDWcg').build()
+    application = ApplicationBuilder().token(os.getenv('TELEGRAM_BOT_TOKEN')).build()
 
     # Add command and message handlers
     application.add_handler(CommandHandler('start', start))
