@@ -8,11 +8,9 @@ from io import BytesIO
 from flask import Flask
 import threading
 
-# Replace this with your bot's API token
-API_TOKEN = '7872145894:AAHXeYeq5WNqco63GdOoB0RDuNy7QJfDWcg'  # Consider using environment variables for sensitive info
-
-# Replace this with your remove.bg API key
-REMOVE_BG_API_KEY = 'jvbpsiXdN3uPkWTxYCDg2WsK'  # Consider using environment variables for sensitive info
+# Use environment variables for sensitive information
+API_TOKEN = os.getenv('TELEGRAM_API_TOKEN', '7872145894:AAHXeYeq5WNqco63GdOoB0RDuNy7QJfDWcg')  # Set your API token in the environment
+REMOVE_BG_API_KEY = os.getenv('REMOVE_BG_API_KEY', 'jvbpsiXdN3uPkWTxYCDg2WsK')  # Set your API key in the environment
 
 # Image dimensions for passport size (pixels)
 PASSPORT_WIDTH = 413
