@@ -105,10 +105,10 @@ def run_telegram_bot():
     application.add_handler(MessageHandler(filters.PHOTO, handle_image))
     application.run_polling()
 
-if __name__ == '__main__':
-    # Start the Flask server
-    port = int(os.environ.get('PORT', 5000))  # Render requires port binding
+if __name__ == '__main__':    
+    # Start the Flask server in a separate thread
+    port = int(os.environ.get('PORT', 5000))  # Port for Flask
     threading.Thread(target=app.run, kwargs={'host': '0.0.0.0', 'port': port}).start()
 
     # Run the Telegram bot
-    run_telegram_bot()
+    asyncio.run(run_telegram_bot())
