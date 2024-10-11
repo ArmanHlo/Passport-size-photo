@@ -4,9 +4,19 @@ import numpy as np
 from PIL import Image
 from telegram.ext import Application, CommandHandler, MessageHandler, filters
 from io import BytesIO
+from flask import Flask
+import threading
 
 # Use environment variables for sensitive information
 API_TOKEN = os.getenv('TELEGRAM_API_TOKEN', '7872145894:AAHXeYeq5WNqco63GdOoB0RDuNy7QJfDWcg')
+
+
+# Flask app for port binding
+app = Flask(__name__)
+
+@app.route('/')
+def home():
+    return "Bot is running!"
 
 
 def cartoonize_image(image_path):
@@ -70,4 +80,9 @@ def run_telegram_bot():
     application.run_polling()
 
 if __name__ == '__main__':
+    # Start the Flask server in a separate thread
+    port = int(os.environ.get('PORT', 5000))  # Port for Flask
+    threading.Thread(target=app.run, kwargs={'host': '0.0.0.0', 'port': port}).start()
+
+    # Run the Telegram bot
     run_telegram_bot()
