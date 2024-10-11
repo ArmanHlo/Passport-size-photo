@@ -9,10 +9,10 @@ from flask import Flask
 import threading
 
 # Replace this with your bot's API token
-API_TOKEN = '7872145894:AAHXeYeq5WNqco63GdOoB0RDuNy7QJfDWcg'
+API_TOKEN = '7872145894:AAHXeYeq5WNqco63GdOoB0RDuNy7QJfDWcg'  # Consider using environment variables for sensitive info
 
 # Replace this with your remove.bg API key
-REMOVE_BG_API_KEY = 'jvbpsiXdN3uPkWTxYCDg2WsK'
+REMOVE_BG_API_KEY = 'jvbpsiXdN3uPkWTxYCDg2WsK'  # Consider using environment variables for sensitive info
 
 # Image dimensions for passport size (pixels)
 PASSPORT_WIDTH = 413
@@ -79,7 +79,12 @@ async def handle_image(update, context):
         # Step 2: Crop to passport size
         await context.bot.send_message(chat_id=update.message.chat.id, text="Cropping image to passport size... 100%")
         passport_image = crop_to_passport(bg_removed_image)
-        passport_image.save(output_path, quality=95)  # Adjust quality if needed
+
+        # Convert the image to RGB before saving as JPEG
+        passport_image = passport_image.convert("RGB")
+        
+        # Save the processed image as JPEG
+        passport_image.save(output_path, format='JPEG', quality=95)  # Adjust quality if needed
 
         # Send the processed image
         await context.bot.send_photo(chat_id=update.message.chat.id, photo=open(output_path, 'rb'))
