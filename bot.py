@@ -26,7 +26,7 @@ def home():
 
 # Start command for the bot
 async def start(update: Update, context):
-    await update.message.reply_text('Welcome! Send me a description and I will create an image out of it.')
+    await update.message.reply_text('Welcome! Send me a description and I will create an image out of it or ask me any question!')
 
 # Function to generate an image from a text description using OpenAI
 def generate_image_from_text(description):
@@ -43,20 +43,41 @@ def generate_image_from_text(description):
         logger.error(f"Error generating image: {e}")
         return None
 
+# Function to get answers to questions using OpenAI
+def get_answer_from_openai(question):
+    try:
+        response = openai.ChatCompletion.create(
+            model="gpt-3.5-turbo",  # Choose the appropriate model
+            messages=[{"role": "user", "content": question}]
+        )
+        answer = response.choices[0].message['content']
+        return answer
+    except Exception as e:
+        logger.error(f"Error getting answer: {e}")
+        return "Sorry, I couldn't process your question."
+
 # Handle incoming text messages
 async def handle_message(update: Update, context):
     text = update.message.text
-    image_url = generate_image_from_text(text)
 
-    if image_url:
-        # Send the generated image URL
-        await update.message.reply_photo(photo=image_url)
+    # Check if the text is a description for an image or a question
+    if "image" in text.lower():  # Simple check for image requests
+        description = text.replace("image", "").strip()
+        image_url = generate_image_from_text(description)
+
+        if image_url:
+            # Send the generated image URL
+            await update.message.reply_photo(photo=image_url)
+        else:
+            await update.message.reply_text('Sorry, I couldn\'t generate an image from that description.')
     else:
-        await update.message.reply_text('Sorry, I couldn\'t generate an image from that description.')
+        # Assume it's a question
+        answer = get_answer_from_openai(text)
+        await update.message.reply_text(answer)
 
 # Function to run the Telegram bot
 def run_telegram_bot():
-    # Replace 'YOUR_BOT_TOKEN' with your bot's token
+    # Build the Telegram bot application with the token from environment variables
     application = ApplicationBuilder().token(os.getenv('TELEGRAM_BOT_TOKEN')).build()
 
     # Add command and message handlers
