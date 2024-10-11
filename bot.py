@@ -11,7 +11,7 @@ from dotenv import load_dotenv  # Import to load .env file
 load_dotenv()
 
 # Set the OpenAI API key from the environment
-openai.api_key = os.getenv('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')
+openai.api_key = os.getenv('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')
 
 # Set up logging
 logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s', level=logging.INFO)
