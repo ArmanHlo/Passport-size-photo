@@ -41,25 +41,28 @@ def remove_background(image_path):
         raise Exception("Failed to remove background: " + response.text)
 
 def crop_to_passport(image):
-    ''' Crops the image to passport size after detecting face '''
+    ''' Crops the image to passport size after detecting full body '''
     image_cv = cv2.cvtColor(np.array(image), cv2.COLOR_RGB2BGR)
-    face_cascade = cv2.CascadeClassifier(cv2.data.haarcascades + 'haarcascade_frontalface_default.xml')
+    
+    # Load the body cascade classifier
+    body_cascade = cv2.CascadeClassifier(cv2.data.haarcascades + 'haarcascade_fullbody.xml')
     gray = cv2.cvtColor(image_cv, cv2.COLOR_BGR2GRAY)
-    faces = face_cascade.detectMultiScale(gray, 1.3, 5)
+    
+    # Detect bodies in the image
+    bodies = body_cascade.detectMultiScale(gray, scaleFactor=1.1, minNeighbors=3)
 
-    if len(faces) == 0:
-        raise Exception("No face detected!")
+    if len(bodies) == 0:
+        raise Exception("No body detected!")
 
-    # Get the largest face detected
-    x, y, w, h = max(faces, key=lambda f: f[2] * f[3])
+    # Get the largest body detected
+    x, y, w, h = max(bodies, key=lambda b: b[2] * b[3])
 
-    # Expand the bounding box to include shoulders
-    shoulder_margin = int(h * 0.5)  # Adjust this value to include more of the shoulders
-    new_y = max(0, y - shoulder_margin)  # Ensure we don't go out of bounds
-    new_height = h + shoulder_margin  # Expand the height to include shoulders
+    # Adjust cropping dimensions to include shoulders, head, and hair
+    shoulder_padding = int(h * 0.2)  # Adjust this value as needed for shoulder space
+    head_padding = int(h * 0.3)  # Space above head for hair
+    cropped_image = image.crop((x - int(w * 0.1), y - head_padding, x + w + int(w * 0.1), y + h + shoulder_padding))
 
-    # Adjust the cropping area to passport size while keeping the face in focus
-    cropped_image = image.crop((x, new_y, x + w, new_y + new_height))
+    # Resize to passport size
     cropped_image = cropped_image.resize((PASSPORT_WIDTH, PASSPORT_HEIGHT), Image.LANCZOS)
 
     # Enhance image quality
