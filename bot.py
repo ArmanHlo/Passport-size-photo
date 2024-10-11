@@ -12,7 +12,6 @@ logger = logging.getLogger(__name__)
 
 # Initialize Flask app
 app = Flask(__name__)
-
 @app.route('/')
 def home():
     return "Telegram Bot and Flask Server are running!"
