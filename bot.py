@@ -1,10 +1,10 @@
 import os
 import threading
 import logging
+import openai  # Import OpenAI
 from flask import Flask
 from telegram import Update
 from telegram.ext import ApplicationBuilder, CommandHandler, MessageHandler, filters
-from PIL import Image, ImageDraw, ImageFont
 
 # Set up logging
 logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s', level=logging.INFO)
@@ -19,38 +19,26 @@ def home():
 
 # Start command for the bot
 async def start(update: Update, context):
-    await update.message.reply_text('Welcome! Send me some text and I will create an image out of it.')
+    await update.message.reply_text('Welcome! Send me a description and I will create an image out of it.')
 
-# Generate image from text
-def generate_image(text):
-    # Create an image with white background
-    img = Image.new('RGB', (500, 300), color=(255, 255, 255))
-
-    # Load a font
-    try:
-        font = ImageFont.truetype("arial.ttf", 40)
-    except IOError:
-        font = ImageFont.load_default()
-
-    # Get a drawing context
-    d = ImageDraw.Draw(img)
-
-    # Add text to image (centered)
-    text_width, text_height = d.textsize(text, font=font)
-    position = ((500 - text_width) / 2, (300 - text_height) / 2)
-    d.text(position, text, fill=(0, 0, 0), font=font)
-
-    # Save the image to a file
-    img.save('output.png')
+# Function to generate an image from a text description using OpenAI
+def generate_image_from_text(description):
+    # Send the text description to the OpenAI API
+    response = openai.Image.create(
+        prompt=description,
+        n=1,  # Generate one image
+        size="512x512"  # Image size
+    )
+    image_url = response['data'][0]['url']  # Get the image URL from the response
+    return image_url
 
 # Handle incoming text messages
 async def handle_message(update: Update, context):
     text = update.message.text
-    generate_image(text)
+    image_url = generate_image_from_text(text)
 
-    # Send the generated image
-    with open('output.png', 'rb') as image:
-        await update.message.reply_photo(photo=image)
+    # Send the generated image URL
+    await update.message.reply_photo(photo=image_url)
 
 # Function to run the Telegram bot
 def run_telegram_bot():
