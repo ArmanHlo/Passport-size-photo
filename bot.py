@@ -2,7 +2,7 @@ import os
 import cv2
 import requests
 import numpy as np
-from PIL import Image, ImageFilter  # Make sure to import ImageFilter for additional image processing
+from PIL import Image, ImageFilter  
 from telegram.ext import Application, CommandHandler, MessageHandler, filters
 from io import BytesIO
 from flask import Flask
