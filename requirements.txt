@@ -14,7 +14,7 @@ idna==3.10
 itsdangerous==2.2.0
 Jinja2==3.1.4
 MarkupSafe==3.0.1
-numpy<2.0.0  # Downgrade NumPy to avoid compatibility issues
+numpy==1.24.4  
 opencv-python-headless==4.10.0.84
 pillow==10.4.0
 python-telegram-bot==21.6
@@ -29,7 +29,7 @@ tzdata==2024.2
 tzlocal==5.2
 urllib3==2.2.3
 Werkzeug==3.0.4
-openai==0.27.8
 transformers==4.33.2
 diffusers==0.20.0
-torch==2.0.1  # Include the correct version of PyTorch here
+torch==2.0.1 
+openai==0.27.8
