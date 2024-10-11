@@ -13,7 +13,6 @@ REMOVE_BG_API_KEY = os.getenv('REMOVE_BG_API_KEY', 'jvbpsiXdN3uPkWTxYCDg2WsK')
 
 # Flask app for port binding
 app = Flask(__name__)
-
 @app.route('/')
 def home():
     return "Bot is running!"
