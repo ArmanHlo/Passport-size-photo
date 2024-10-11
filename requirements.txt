@@ -7,6 +7,7 @@ charset-normalizer==3.4.0
 click==8.1.7
 colorama==0.4.6
 Flask==3.0.3
+Flask-Cors==3.0.10  # Optional for CORS
 h11==0.14.0
 httpcore==1.0.6
 httpx==0.27.2
@@ -15,9 +16,11 @@ itsdangerous==2.2.0
 Jinja2==3.1.4
 MarkupSafe==3.0.1
 numpy==2.1.2
-opencv-python-headless==4.10.0.84
+opencv-python-headless==4.10.0.84  # Use this for servers
+# opencv-python==4.10.0.84  # Optional, only if GUI features are needed
 pillow==10.4.0
 python-telegram-bot==21.6
+python-dotenv==1.0.0  # For loading environment variables
 pytz==2024.2
 requests==2.32.3
 setuptools==75.1.0
@@ -28,7 +31,3 @@ tzdata==2024.2
 tzlocal==5.2
 urllib3==2.2.3
 Werkzeug==3.0.4
-python-dotenv==1.0.0
-transformers==4.33.0
-diffusers==0.18.0
-torch==2.0.1 
