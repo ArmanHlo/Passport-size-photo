@@ -2,7 +2,7 @@ import os
 import cv2
 import requests
 import numpy as np
-from PIL import Image
+from PIL import Image, ImageFilter  # Make sure to import ImageFilter for additional image processing
 from telegram.ext import Application, CommandHandler, MessageHandler, filters
 from io import BytesIO
 from flask import Flask
@@ -52,9 +52,10 @@ def crop_to_passport(image):
     if len(faces) == 0:
         raise Exception("No face detected!")
 
+    # Get the largest face detected
     x, y, w, h = max(faces, key=lambda f: f[2] * f[3])
     cropped_image = image.crop((x, y, x + w, y + h))
-    cropped_image = cropped_image.resize((PASSPORT_WIDTH, PASSPORT_HEIGHT), Image.ANTIALIAS)
+    cropped_image = cropped_image.resize((PASSPORT_WIDTH, PASSPORT_HEIGHT), Image.LANCZOS)  # Use LANCZOS for high-quality resizing
 
     return cropped_image
 
