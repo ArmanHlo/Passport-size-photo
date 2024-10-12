@@ -15,6 +15,7 @@ CHOOSING_FORMAT = 1
 API_TOKEN = os.getenv('TELEGRAM_API_TOKEN', '7872145894:AAHXeYeq5WNqco63GdOoB0RDuNy7QJfDWcg')
 REMOVE_BG_API_KEY = os.getenv('REMOVE_BG_API_KEY', 'jvbpsiXdN3uPkWTxYCDg2WsK')
 
+
 # Flask app for port binding
 app = Flask(__name__)
 
@@ -35,7 +36,7 @@ def ping_self():
 def remove_background(image_path):
     url = 'https://api.remove.bg/v1.0/removebg'
     headers = {'X-Api-Key': REMOVE_BG_API_KEY}
-    
+
     with open(image_path, 'rb') as image_file:
         response = requests.post(
             url,
@@ -50,13 +51,13 @@ def remove_background(image_path):
 
 # Handle format choice
 async def choose_format(update, context):
-    ''' Ask user to choose between PNG or JPEG '''
+    """Ask user to choose between PNG or JPEG."""
     await update.message.reply_text("Which format would you like? Reply with 'PNG' or 'JPEG'.")
     return CHOOSING_FORMAT
 
 # Handle format selection from user
 async def format_choice(update, context):
-    ''' Store user format choice and move to image handling '''
+    """Store user format choice and move to image handling."""
     user_choice = update.message.text.upper()
     if user_choice not in ["PNG", "JPEG"]:
         await update.message.reply_text("Please choose either 'PNG' or 'JPEG'.")
@@ -69,13 +70,17 @@ async def format_choice(update, context):
 
 # Handle incoming images
 async def handle_image(update, context):
-    ''' Handle images and process according to user's chosen format '''
+    """Handle images and process according to user's chosen format."""
+    if 'format_choice' not in context.user_data:
+        await update.message.reply_text("Please start the process by choosing a format using /start.")
+        return
+
     photo_file = await update.message.photo[-1].get_file()
     image_path = f"temp_{update.message.from_user.id}.jpg"
     await photo_file.download_to_drive(image_path)
 
     # Get the user's chosen format from context
-    format_choice = context.user_data.get('format_choice', 'JPEG')
+    format_choice = context.user_data['format_choice']
     output_path = f"bg_removed_{update.message.from_user.id}.{format_choice.lower()}"  # .png or .jpg
 
     try:
@@ -100,6 +105,7 @@ async def handle_image(update, context):
         await update.message.reply_text(f"Error: {str(e)}")
 
     finally:
+        # Clean up temporary files
         if os.path.exists(image_path):
             os.remove(image_path)
         if os.path.exists(output_path):
@@ -108,6 +114,7 @@ async def handle_image(update, context):
 # Start command handler
 async def start(update, context):
     await update.message.reply_text("Hello! First, choose your preferred format (PNG or JPEG) for the images.")
+    return await choose_format(update, context)
 
 # Run the Telegram bot
 def run_telegram_bot():
@@ -129,7 +136,6 @@ def run_telegram_bot():
     application.run_polling()
 
 if __name__ == '__main__':
-
     # Start the Flask server in a separate thread
     port = int(os.environ.get('PORT', 5000))  # Port for Flask
     threading.Thread(target=app.run, kwargs={'host': '0.0.0.0', 'port': port}).start()
