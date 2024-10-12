@@ -16,7 +16,6 @@ API_TOKEN = os.getenv('TELEGRAM_API_TOKEN', '7872145894:AAHXeYeq5WNqco63GdOoB0RD
 REMOVE_BG_API_KEY = os.getenv('REMOVE_BG_API_KEY', 'jvbpsiXdN3uPkWTxYCDg2WsK')
 
 
-
 # Flask app for port binding
 app = Flask(__name__)
 
@@ -61,7 +60,7 @@ async def format_choice(update, context):
     if user_choice not in ["PNG", "JPEG"]:
         await update.message.reply_text("Please choose either 'PNG' or 'JPEG'.")
         return CHOOSING_FORMAT
-    
+
     context.user_data['format_choice'] = user_choice
     await update.message.reply_text(f"Got it! You chose {user_choice}. Now send me an image to process.")
     return ConversationHandler.END
