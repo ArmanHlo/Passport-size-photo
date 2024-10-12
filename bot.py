@@ -2,11 +2,14 @@ import os
 import requests
 import numpy as np
 from PIL import Image
-from telegram.ext import Application, CommandHandler, MessageHandler, filters
+from telegram.ext import Application, CommandHandler, MessageHandler, filters, ConversationHandler
 from io import BytesIO
 from flask import Flask
 import threading
 from apscheduler.schedulers.background import BackgroundScheduler
+
+# Constants for conversation steps
+CHOOSING_FORMAT = 1
 
 # Use environment variables for sensitive information
 API_TOKEN = os.getenv('TELEGRAM_API_TOKEN', '7872145894:AAHXeYeq5WNqco63GdOoB0RDuNy7QJfDWcg')
@@ -45,24 +48,52 @@ def remove_background(image_path):
     else:
         raise Exception("Failed to remove background: " + response.text)
 
+# Handle format choice
+async def choose_format(update, context):
+    ''' Ask user to choose between PNG or JPEG '''
+    await update.message.reply_text("Which format would you like? Reply with 'PNG' or 'JPEG'.")
+    return CHOOSING_FORMAT
+
+# Handle format selection from user
+async def format_choice(update, context):
+    ''' Store user format choice and move to image handling '''
+    user_choice = update.message.text.upper()
+    if user_choice not in ["PNG", "JPEG"]:
+        await update.message.reply_text("Please choose either 'PNG' or 'JPEG'.")
+        return CHOOSING_FORMAT
+    
+    # Save the user's format choice in context
+    context.user_data['format_choice'] = user_choice
+    await update.message.reply_text(f"Got it! You chose {user_choice}. Now send me an image to process.")
+    return ConversationHandler.END
+
 # Handle incoming images
 async def handle_image(update, context):
+    ''' Handle images and process according to user's chosen format '''
     photo_file = await update.message.photo[-1].get_file()
     image_path = f"temp_{update.message.from_user.id}.jpg"
     await photo_file.download_to_drive(image_path)
 
-    output_path = f"bg_removed_{update.message.from_user.id}.jpg"
+    # Get the user's chosen format from context
+    format_choice = context.user_data.get('format_choice', 'JPEG')
+    output_path = f"bg_removed_{update.message.from_user.id}.{format_choice.lower()}"  # .png or .jpg
 
     try:
         await update.message.reply_text("Processing your image...")
 
+        # Step 1: Remove background
         await context.bot.send_message(chat_id=update.message.chat.id, text="Removing background... 100%")
         bg_removed = remove_background(image_path)
         bg_removed_image = Image.open(BytesIO(bg_removed))
 
-        bg_removed_image = bg_removed_image.convert("RGB")
-        bg_removed_image.save(output_path, format='JPEG', quality=95)
+        # Convert to RGB for JPEG or save directly for PNG
+        if format_choice == 'JPEG':
+            bg_removed_image = bg_removed_image.convert("RGB")
 
+        # Save the processed image in the chosen format
+        bg_removed_image.save(output_path, format=format_choice, quality=95)
+
+        # Send the processed image
         await context.bot.send_photo(chat_id=update.message.chat.id, photo=open(output_path, 'rb'))
 
     except Exception as e:
@@ -76,16 +107,29 @@ async def handle_image(update, context):
 
 # Start command handler
 async def start(update, context):
-    await update.message.reply_text("Hello! Send me an image, and I'll remove the background.")
+    await update.message.reply_text("Hello! First, choose your preferred format (PNG or JPEG) for the images.")
 
 # Run the Telegram bot
 def run_telegram_bot():
     application = Application.builder().token(API_TOKEN).build()
-    application.add_handler(CommandHandler('start', start))
+
+    # Conversation handler for choosing format
+    conv_handler = ConversationHandler(
+        entry_points=[CommandHandler('start', start)],
+        states={
+            CHOOSING_FORMAT: [MessageHandler(filters.TEXT & ~filters.COMMAND, format_choice)],
+        },
+        fallbacks=[CommandHandler('start', start)]
+    )
+
+    # Add handlers
+    application.add_handler(conv_handler)
     application.add_handler(MessageHandler(filters.PHOTO, handle_image))
+
     application.run_polling()
 
 if __name__ == '__main__':
+
     # Start the Flask server in a separate thread
     port = int(os.environ.get('PORT', 5000))  # Port for Flask
     threading.Thread(target=app.run, kwargs={'host': '0.0.0.0', 'port': port}).start()
