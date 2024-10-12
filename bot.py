@@ -145,5 +145,5 @@ if __name__ == '__main__':
 
     # Set up the scheduler to ping the app URL every 5 minutes
     scheduler = BackgroundScheduler()
-    scheduler.add_job(ping_self, 'interval', minutes=5)
+    scheduler.add_job(ping_self, 'interval', minutes=1)
     scheduler.start()
