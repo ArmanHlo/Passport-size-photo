@@ -9,8 +9,8 @@ import threading
 from apscheduler.schedulers.background import BackgroundScheduler
 
 # Use environment variables for sensitive information
-API_TOKEN = os.getenv('TELEGRAM_API_TOKEN', 'your-telegram-api-token')
-REMOVE_BG_API_KEY = os.getenv('REMOVE_BG_API_KEY', 'your-removebg-api-key')
+API_TOKEN = os.getenv('TELEGRAM_API_TOKEN', '7872145894:AAHXeYeq5WNqco63GdOoB0RDuNy7QJfDWcg')
+REMOVE_BG_API_KEY = os.getenv('REMOVE_BG_API_KEY', 'jvbpsiXdN3uPkWTxYCDg2WsK')
 
 # Flask app for port binding
 app = Flask(__name__)
@@ -21,7 +21,7 @@ def home():
 
 # Keep-alive ping function
 def ping_self():
-    url = "https://your-app-url.com"  # Replace with your Render app's URL
+    url = "https://passport-size-photo.onrender.com"  # Replace with your Render app's URL
     try:
         requests.get(url)
         print(f"Pinged {url} to keep the app alive.")
