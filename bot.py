@@ -5,6 +5,7 @@ from PIL import Image
 from telegram.ext import Application, CommandHandler, MessageHandler, filters, ConversationHandler
 from telegram import ReplyKeyboardMarkup
 from io import BytesIO
+import logging
 from flask import Flask
 import threading
 from apscheduler.schedulers.background import BackgroundScheduler
@@ -141,8 +142,17 @@ async def handle_image(update, context):
         if os.path.exists(output_path):
             os.remove(output_path)
 
+# Error handler function
+async def error_handler(update, context):
+    """Log the error and send a message to notify the user."""
+    logging.error(f"Update {update} caused error {context.error}")
+    await update.message.reply_text("An unexpected error occurred. Please try again.")
+
 # Run the Telegram bot
 def run_telegram_bot():
+    # Set up logging
+    logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s', level=logging.INFO)
+    
     application = Application.builder().token(API_TOKEN).build()
 
     # Conversation handler for choosing format and color
@@ -158,6 +168,9 @@ def run_telegram_bot():
     # Add handlers
     application.add_handler(conv_handler)
     application.add_handler(MessageHandler(filters.PHOTO, handle_image))
+
+    # Register error handler
+    application.add_error_handler(error_handler)
 
     application.run_polling()
 
