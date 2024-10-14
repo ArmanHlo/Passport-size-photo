@@ -1,22 +1,20 @@
-import os
+import os 
 import requests
 import numpy as np
 from PIL import Image
 from telegram.ext import Application, CommandHandler, MessageHandler, filters, ConversationHandler
-from telegram import ReplyKeyboardMarkup
 from io import BytesIO
-import logging
 from flask import Flask
 import threading
 from apscheduler.schedulers.background import BackgroundScheduler
 
 # Constants for conversation steps
 CHOOSING_FORMAT = 1
-CHOOSING_COLOR = 2
 
 # Use environment variables for sensitive information
 API_TOKEN = os.getenv('TELEGRAM_API_TOKEN')
 REMOVE_BG_API_KEY = os.getenv('REMOVE_BG_API_KEY')
+
 
 # Flask app for port binding
 app = Flask(__name__)
@@ -51,14 +49,6 @@ def remove_background(image_path):
     else:
         raise Exception("Failed to remove background: " + response.text)
 
-# Predefined color options for user to choose
-COLOR_OPTIONS = [['White', 'Black'], ['Red', 'Green'], ['Blue', 'Yellow'], ['Custom']]
-
-# Start command handler
-async def start(update, context):
-    await update.message.reply_text("Hello! First, choose your preferred format (PNG or JPEG) for the images.")
-    return await choose_format(update, context)
-
 # Handle format choice
 async def choose_format(update, context):
     """Ask user to choose between PNG or JPEG."""
@@ -67,40 +57,21 @@ async def choose_format(update, context):
 
 # Handle format selection from user
 async def format_choice(update, context):
+    """Store user format choice and move to image handling."""
     user_choice = update.message.text.upper()
     if user_choice not in ["PNG", "JPEG"]:
         await update.message.reply_text("Please choose either 'PNG' or 'JPEG'.")
         return CHOOSING_FORMAT
     
+    # Save the user's format choice in context
     context.user_data['format_choice'] = user_choice
-    if user_choice == 'JPEG':
-        # Ask for background color if JPEG is chosen
-        await update.message.reply_text(
-            "You chose JPEG. Please select a background color:",
-            reply_markup=ReplyKeyboardMarkup(COLOR_OPTIONS, one_time_keyboard=True)
-        )
-        return CHOOSING_COLOR
-    else:
-        await update.message.reply_text(f"Got it! You chose {user_choice}. Now send me an image to process.")
-        return ConversationHandler.END
-
-# Handle color selection from user
-async def color_choice(update, context):
-    user_color = update.message.text.lower()
-    if user_color == 'custom':
-        await update.message.reply_text("Please reply with a hex code (e.g., '#FF5733') for a custom color.")
-        return CHOOSING_COLOR  # Wait for the user to provide a custom color
-    elif user_color in ['white', 'black', 'red', 'green', 'blue', 'yellow']:
-        context.user_data['bg_color'] = user_color
-        await update.message.reply_text(f"You chose {user_color} as the background color. Now send me an image to process.")
-        return ConversationHandler.END
-    else:
-        await update.message.reply_text("Please choose a valid color option from the keyboard.")
-        return CHOOSING_COLOR
+    await update.message.reply_text(f"Got it! You chose {user_choice}. Now send me an image to process.")
+    return ConversationHandler.END
 
 # Handle incoming images
 async def handle_image(update, context):
-    if 'format_choice' not in context.user_data or 'bg_color' not in context.user_data:
+    """Handle images and process according to user's chosen format."""
+    if 'format_choice' not in context.user_data:
         await update.message.reply_text("Please start the process by choosing a format using /start.")
         return
 
@@ -108,9 +79,9 @@ async def handle_image(update, context):
     image_path = f"temp_{update.message.from_user.id}.jpg"
     await photo_file.download_to_drive(image_path)
 
+    # Get the user's chosen format from context
     format_choice = context.user_data['format_choice']
-    bg_color = context.user_data['bg_color']
-    output_path = f"bg_removed_{update.message.from_user.id}.{format_choice.lower()}"
+    output_path = f"bg_removed_{update.message.from_user.id}.{format_choice.lower()}"  # .png or .jpg
 
     try:
         await update.message.reply_text("Processing your image...")
@@ -120,12 +91,9 @@ async def handle_image(update, context):
         bg_removed = remove_background(image_path)
         bg_removed_image = Image.open(BytesIO(bg_removed))
 
-        # Step 2: Apply chosen background color if JPEG is chosen
+        # Convert to RGB for JPEG or save directly for PNG
         if format_choice == 'JPEG':
             bg_removed_image = bg_removed_image.convert("RGB")
-            background = Image.new('RGB', bg_removed_image.size, bg_color)
-            background.paste(bg_removed_image, mask=bg_removed_image.split()[3])  # Apply transparency mask
-            bg_removed_image = background
 
         # Save the processed image in the chosen format
         bg_removed_image.save(output_path, format=format_choice, quality=95)
@@ -137,30 +105,26 @@ async def handle_image(update, context):
         await update.message.reply_text(f"Error: {str(e)}")
 
     finally:
+        # Clean up temporary files
         if os.path.exists(image_path):
             os.remove(image_path)
         if os.path.exists(output_path):
             os.remove(output_path)
 
-# Error handler function
-async def error_handler(update, context):
-    """Log the error and send a message to notify the user."""
-    logging.error(f"Update {update} caused error {context.error}")
-    await update.message.reply_text("An unexpected error occurred. Please try again.")
+# Start command handler
+async def start(update, context):
+    await update.message.reply_text("Hello! First, choose your preferred format (PNG or JPEG) for the images.")
+    return await choose_format(update, context)
 
 # Run the Telegram bot
 def run_telegram_bot():
-    # Set up logging
-    logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s', level=logging.INFO)
-    
     application = Application.builder().token(API_TOKEN).build()
 
-    # Conversation handler for choosing format and color
+    # Conversation handler for choosing format
     conv_handler = ConversationHandler(
         entry_points=[CommandHandler('start', start)],
         states={
             CHOOSING_FORMAT: [MessageHandler(filters.TEXT & ~filters.COMMAND, format_choice)],
-            CHOOSING_COLOR: [MessageHandler(filters.TEXT & ~filters.COMMAND, color_choice)]
         },
         fallbacks=[CommandHandler('start', start)]
     )
@@ -168,9 +132,6 @@ def run_telegram_bot():
     # Add handlers
     application.add_handler(conv_handler)
     application.add_handler(MessageHandler(filters.PHOTO, handle_image))
-
-    # Register error handler
-    application.add_error_handler(error_handler)
 
     application.run_polling()
 
